@@ -29,7 +29,9 @@ FileObj find(FILE *infile, char name[128]){
     struct file_nodes input;
     if (fseek(infile, SKIP_BLOCKS*BLOCK, SEEK_SET)){
         printf("Failed to move\n");
-        return;
+        FileObj empty_file;
+        fseek(infile, current_offset, SEEK_SET);
+        return empty_file;
     }
 	FileObj file;
     // read file contents till end of file
@@ -70,27 +72,25 @@ char * fileRead(FILE *infile, FileObj *file,u32 amount){
         if (file->offset == 0){
             printf("not a file\n");
             fseek(infile, current_offset, SEEK_SET);
-            return;
+            return 0;
         }
         
         else{
             fseek(infile, file->offset+file->currentOffset,SEEK_SET);
             char  * content  = (char *)calloc(amount,sizeof(char));
             if (file->length < amount || file->length < amount+file->currentOffset){
-                fread(&content, file->length, 1, infile);
+                fread(content, file->length, 1, infile);
                 file->currentOffset = file->length;
             }
             else{
-                printf("current_offset = %i\n",ftell(infile));
-                fread(&content, amount, 1, infile);
-                printf("current_offset = %i\n",ftell(infile));
+                fread(content, amount, 1, infile);
                 file->currentOffset = file->currentOffset+amount;
             }
             //fseek(infile, current_offset, SEEK_SET);
             return content;
         }
     }else{
-        return;
+        return 0;
     }
 }
 
@@ -107,9 +107,9 @@ int main ()
       
     // open file for writing
     outfile = fopen ("fs.img", "w");
-    if (outfile == NULL)
+    if (ferror(outfile))
     {
-        fprintf(stderr, "\nError opend file\n");
+        fprintf(stderr, "\nError when opening file\n");
         exit (1);
     }
 
@@ -124,7 +124,7 @@ int main ()
 
   
       
-    if(fwrite != 0) 
+    if(ferror(outfile)) 
         printf("contents to file written successfully !\n");
     else 
         printf("error writing file !\n");
@@ -141,11 +141,10 @@ int main ()
       
     // Open person.dat for reading
     infile = fopen ("fs.img", "r");
-    if (infile == NULL)
-    {
-        fprintf(stderr, "\nError opening file\n");
-        exit (1);
+    if (ferror(infile)){
+        fprintf(stderr, "\nError when opening file\n");
     }
+
     // Skip all the blocks that are used for info and booting
     fseek(infile, SKIP_BLOCKS*BLOCK, SEEK_SET);
     printf("Finding file\n");
@@ -154,9 +153,9 @@ int main ()
     
     char * content = fileRead(infile,&filetxt,3);
     char * content1 = fileRead(infile,&filetxt,8);
-    
-    printf("content = %s\n",&content);
-    printf("content = %s\n",&content1);
+    printf("content amount = %li\n", strlen(content));
+    printf("content = %s\n",content);
+    printf("content = %s\n",content1);
 	//fileRead(infile, "hello\0");
     // close file
     fclose (infile);

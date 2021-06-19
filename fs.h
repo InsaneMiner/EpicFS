@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __FS_H__
+#define __FS_H__
 #include "types.h"
 
 struct file_nodes{
@@ -21,3 +22,4 @@ typedef struct FileObjStruct FileObj;
 u32 BLOCK = 512;
 
 u32 SKIP_BLOCKS = 1;
+#endif
